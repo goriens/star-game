@@ -242,7 +242,6 @@ const ResultsScreen: React.FC<{
 
           {/* Action Buttons */}
           <motion.div
-            variants={itemVariants}
             className="flex flex-col sm:flex-row gap-4 justify-center pt-6"
           >
             <Button
