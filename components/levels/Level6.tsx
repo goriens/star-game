@@ -221,7 +221,7 @@ const Level6: React.FC<{
         <motion.div
           className="cursor-grab text-7xl"
           draggable
-          onDragStart={(e) => e.dataTransfer.setData('sticker', '⭐')}
+          onDragStart={(e:any) => e.dataTransfer.setData('sticker', '⭐')}
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 0.9 }}
         >

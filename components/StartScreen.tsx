@@ -53,7 +53,7 @@ const StartScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => 
       <div className="max-w-4xl w-full">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
           {/* Header */}
-          <motion.div variants={itemVariants} className="text-center">
+          <motion.div  className="text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -84,7 +84,7 @@ const StartScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => 
           </motion.div>
 
           {/* Features */}
-          <motion.div variants={itemVariants}>
+          <motion.div >
             <Card>
               <CardHeader>
                 <CardTitle className="text-center text-2xl">What to Expect</CardTitle>
@@ -112,7 +112,7 @@ const StartScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => 
           </motion.div>
 
           {/* Game Rules */}
-          <motion.div variants={itemVariants}>
+          <motion.div>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -145,7 +145,7 @@ const StartScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => 
           </motion.div>
 
           {/* Start Button */}
-          <motion.div variants={itemVariants} className="text-center pt-6">
+          <motion.div  className="text-center pt-6">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"

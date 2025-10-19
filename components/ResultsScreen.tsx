@@ -84,7 +84,7 @@ const ResultsScreen: React.FC<{
           className="space-y-6"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="text-center">
+          <motion.div  className="text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -102,7 +102,7 @@ const ResultsScreen: React.FC<{
           </motion.div>
 
           {/* Performance Overview */}
-          <motion.div variants={itemVariants}>
+          <motion.div >
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -131,7 +131,7 @@ const ResultsScreen: React.FC<{
           </motion.div>
 
           {/* Detailed Results */}
-          <motion.div variants={itemVariants}>
+          <motion.div>
             <Card>
               <CardHeader>
                 <CardTitle>Detailed Results</CardTitle>
@@ -140,7 +140,6 @@ const ResultsScreen: React.FC<{
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {/* Correct */}
                   <motion.div
-                    variants={itemVariants}
                     className="text-center p-4 bg-green-50 border border-green-200 rounded-lg"
                   >
                     <div className="flex justify-center mb-2">
@@ -152,7 +151,6 @@ const ResultsScreen: React.FC<{
 
                   {/* Incorrect */}
                   <motion.div
-                    variants={itemVariants}
                     className="text-center p-4 bg-red-50 border border-red-200 rounded-lg"
                   >
                     <div className="flex justify-center mb-2">
@@ -164,7 +162,6 @@ const ResultsScreen: React.FC<{
 
                   {/* Missed */}
                   <motion.div
-                    variants={itemVariants}
                     className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
                   >
                     <div className="flex justify-center mb-2">
@@ -176,7 +173,6 @@ const ResultsScreen: React.FC<{
 
                   {/* Total */}
                   <motion.div
-                    variants={itemVariants}
                     className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg"
                   >
                     <div className="flex justify-center mb-2">
@@ -191,7 +187,7 @@ const ResultsScreen: React.FC<{
           </motion.div>
 
           {/* Feedback */}
-          <motion.div variants={itemVariants}>
+          <motion.div >
             <Card>
               <CardHeader>
                 <CardTitle>Performance Feedback</CardTitle>

@@ -11,7 +11,7 @@ interface GameScreenProps {
 }
 
 // 🎮 Base configs for each level (title + description)
-const LEVEL_CONFIGS: Record<number, LevelConfig> = {
+const LEVEL_CONFIGS: Record<number, any> = {
   1: {
     title: 'Level 1: Match the Stars!',
     description: 'Drag ⭐ to the star shapes!',
