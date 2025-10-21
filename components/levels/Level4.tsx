@@ -1,303 +1,307 @@
 'use client'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Star,
-  Triangle,
-  Square,
-  Hexagon,
-  Heart,
-  Circle,
-  Octagon,
-  Diamond,
-  CheckCircle2,
-  AlertCircle,
+  Star, Circle, Square, Heart, Triangle, Diamond, Octagon, Pentagon,
+  CheckCircle2, AlertCircle, Smile
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useEffect, useState } from 'react'
 import { LevelConfig } from '@/types/game'
-
-// shuffle helper
-const shuffleArray = <T,>(arr: T[]): T[] =>
-  arr
-    .map((item) => ({ item, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ item }) => item)
+import { useEffect, useState } from 'react'
 
 const Level4: React.FC<{
-  config?: LevelConfig
+  config: LevelConfig
   onStickerPlace: (shapeIndex: number, sticker: string) => void
-  // ✅ updated signature for result stats
   onLevelComplete: (
     success: boolean,
     stats?: { correct: number; incorrect: number; missed: number }
   ) => void
 }> = ({ config, onStickerPlace, onLevelComplete }) => {
-  const MAX_ATTEMPTS = 6
+  type ShapeType =
+    | 'star' | 'circle' | 'square' | 'heart' | 'triangle'
+    | 'diamond' | 'pentagon' | 'octagon'
+
   const [attempts, setAttempts] = useState(0)
   const [gameOver, setGameOver] = useState(false)
   const [showPopup, setShowPopup] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(180)
+  const [celebrations, setCelebrations] = useState<number[]>([])
+  const [timeLeft, setTimeLeft] = useState(50)
+  const MAX_ATTEMPTS = 6
 
-  const defaultConfig = {
-    title: 'Level 4 – Star Challenge!',
-    description: '16 icons, 8 shapes! Find all the stars before time runs out.',
-  }
-  const { title, description } = config || defaultConfig
+  const [targetShape, setTargetShape] = useState<ShapeType>('star')
+  const [shapes, setShapes] = useState<
+    { type: ShapeType; hasSticker: boolean; disabled: boolean }[]
+  >([])
 
-  // 8 shape types × 2 each = 16 icons (4 stars correct)
-  const baseShapes = [
-    { type: 'star' }, { type: 'triangle' },
-    { type: 'square' }, { type: 'hexagon' },
-    { type: 'heart' }, { type: 'circle' },
-    { type: 'octagon' }, { type: 'diamond' },
-    { type: 'star' }, { type: 'triangle' },
-    { type: 'square' }, { type: 'hexagon' },
-    { type: 'heart' }, { type: 'circle' },
-    { type: 'star' }, { type: 'star' },
-  ].map((s) => ({ ...s, hasSticker: false, sticker: '', disabled: false }))
+  /* 🎯 Setup */
+  useEffect(() => {
+    const all: ShapeType[] = [
+      'star','circle','square','heart','triangle','diamond','pentagon','octagon'
+    ]
+    const chosen = all[Math.floor(Math.random() * all.length)]
+    setTargetShape(chosen)
 
-  const [shapes, setShapes] = useState(() => shuffleArray(baseShapes))
+    const corrects = Array(4).fill({ type: chosen, hasSticker: false, disabled: false })
+    const others = all
+      .filter((t) => t !== chosen)
+      .map((t) => ({ type: t, hasSticker: false, disabled: false }))
+    const mix = [...corrects, ...others].sort(() => Math.random() - 0.5).slice(0, 12)
+    setShapes(mix)
+  }, [])
 
-  // countdown
+  /* ⏱ Timer */
   useEffect(() => {
     if (gameOver || showPopup) return
-    if (timeLeft <= 0) {
-      setGameOver(true)
-      return
-    }
-    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000)
-    return () => clearInterval(timer)
+    if (timeLeft <= 0) return setGameOver(true)
+    const t = setInterval(() => setTimeLeft((v) => v - 1), 1000)
+    return () => clearInterval(t)
   }, [timeLeft, gameOver, showPopup])
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60)
-    const sec = s % 60
-    return `${m}:${sec.toString().padStart(2, '0')}`
-  }
+  const formatTime = (s: number) =>
+    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
-  const handleStickerPlace = (index: number, sticker: string) => {
+  /* 🖱 Click */
+  const handleClick = (i: number) => {
     if (gameOver || showPopup) return
-    const shape = shapes[index]
-    const isCorrect = shape.type === 'star' && sticker === '⭐'
+    const shape = shapes[i]
+    if (shape.disabled) return
+
+    const isCorrect = shape.type === targetShape
+    const updated = [...shapes]
 
     if (isCorrect) {
-      const updated = [...shapes]
-      updated[index] = { ...shape, hasSticker: true, sticker, disabled: true }
+      updated[i] = { ...shape, hasSticker: true, disabled: true }
       setShapes(updated)
-      onStickerPlace(index, sticker)
+      setCelebrations((p) => [...p, i])
+      setTimeout(() => setCelebrations((p) => p.filter((x) => x !== i)), 1200)
 
-      const allStars = updated.filter((s) => s.type === 'star')
-      const allDone = allStars.every((s) => s.hasSticker)
-      if (allDone) setTimeout(() => setShowPopup(true), 600)
+      onStickerPlace(i, shapeEmoji(shape.type))
+      const allFound = updated.filter((s) => s.type === targetShape).every((s) => s.hasSticker)
+      if (allFound) setTimeout(() => setShowPopup(true), 800)
     } else {
-      const newAttempts = attempts + 1
-      setAttempts(newAttempts)
-      const el = document.getElementById(`shape-${index}`)
+      const newA = attempts + 1
+      setAttempts(newA)
+      const el = document.getElementById(`shape-${i}`)
       if (el) {
-        el.style.animation = 'shake 0.4s ease'
-        setTimeout(() => (el.style.animation = ''), 400)
+        el.style.animation = 'shake 0.5s ease'
+        setTimeout(() => (el.style.animation = ''), 500)
       }
-      if (newAttempts >= MAX_ATTEMPTS) setGameOver(true)
+      if (newA >= MAX_ATTEMPTS) setGameOver(true)
     }
   }
 
-  const restartLevel = () => {
-    setAttempts(0)
-    setGameOver(false)
-    setShowPopup(false)
-    setTimeLeft(180)
-    setShapes(shuffleArray(baseShapes))
-  }
+  const restart = () => window.location.reload()
 
-  // ---------- ✅ Level Complete Popup (with scoring) ----------
+  /* ✅ Success popup */
   if (showPopup)
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-green-50 via-white to-blue-50 text-center">
-        <AnimatePresence>
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6"
+      <PlayBackground>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 120 }}
+          className="text-center space-y-6 bg-white/95 p-8 rounded-3xl shadow-2xl border-8 border-green-300 mx-4"
+        >
+          <CheckCircle2 className="w-24 h-24 text-green-500 mx-auto fill-green-400 animate-bounce" />
+          <h2 className="text-5xl font-extrabold text-green-600">Awesome! 🎉</h2>
+          <p className="text-2xl text-gray-800 font-bold">
+            You found all {capitalize(targetShape)}s {shapeEmoji(targetShape)}
+          </p>
+          <Confetti />
+          <Button
+            onClick={() =>
+              onLevelComplete(true, {
+                correct: shapes.filter((s) => s.type === targetShape && s.hasSticker).length,
+                incorrect: attempts,
+                missed: shapes.filter((s) => s.type === targetShape && !s.hasSticker).length,
+              })
+            }
+            className="text-xl px-12 py-6 bg-gradient-to-r from-green-500 to-blue-500 hover:scale-105 transition-transform text-white rounded-2xl shadow-xl border-4 border-yellow-300 font-bold"
           >
-            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto" />
-            <h2 className="text-4xl font-bold text-green-600 drop-shadow-sm">
-              🎉 Level Complete!
-            </h2>
-            <p className="text-lg text-gray-700">You found all the stars! Awesome job!</p>
-
-            {/* ✅ send result stats upward */}
-            <Button
-              onClick={() =>
-                onLevelComplete(true, {
-                  correct: shapes.filter((s) => s.type === 'star' && s.hasSticker).length,
-                  incorrect: attempts,
-                  missed: shapes.filter((s) => s.type === 'star' && !s.hasSticker).length,
-                })
-              }
-              className="text-lg px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-md"
-            >
-              Go to Level 5 ➡️
-            </Button>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+            NEXT LEVEL 🚀
+          </Button>
+        </motion.div>
+      </PlayBackground>
     )
 
-  // ---------- Game Over ----------
+  /* ❌ Game Over */
   if (gameOver)
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-rose-50 via-white to-amber-50 text-center">
-        <AlertCircle className="w-20 h-20 text-red-500 mx-auto" />
-        <h2 className="text-3xl font-bold text-red-600 drop-shadow-sm">Oops! Try Again!</h2>
-        <p className="text-lg text-gray-700">You ran out of time or attempts. Try again!</p>
-        <Button
-          onClick={restartLevel}
-          className="mt-4 text-lg px-10 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-md"
-        >
-          Restart 🔄
-        </Button>
-      </div>
+      <PlayBackground gradient="from-red-100 via-pink-50 to-orange-100">
+        <div className="text-center space-y-6 bg-white/95 p-8 rounded-3xl shadow-2xl border-8 border-red-300 mx-4">
+          <AlertCircle className="w-24 h-24 text-red-500 mx-auto fill-red-200" />
+          <h2 className="text-4xl font-extrabold text-red-600">Oops! Try Again 😅</h2>
+          <p className="text-2xl text-gray-800 font-bold">
+            Find all the {capitalize(targetShape)}s!
+          </p>
+          <Button
+            onClick={restart}
+            className="text-xl px-12 py-6 bg-gradient-to-r from-green-500 to-purple-500 text-white rounded-2xl shadow-xl border-4 border-yellow-300 font-bold"
+          >
+            PLAY AGAIN 🔄
+          </Button>
+        </div>
+      </PlayBackground>
     )
 
-  // ---------- Active Game ----------
+  /* 🧩 Active Game */
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-yellow-50 via-white to-blue-50 text-center overflow-hidden p-4">
-      <FloatingStars />
-
-      {/* Attempts */}
-      <div className="flex justify-center gap-2 mb-2">
-        {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
-          <div
-            key={i}
-            className={`w-4 h-4 rounded-full ${
-              i < attempts ? 'bg-red-400' : 'bg-green-400'
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* Timer */}
-      <p className="text-sm text-gray-700 mb-4">
-        ⏳ Time left:{' '}
-        <span className="font-semibold text-indigo-700">{formatTime(timeLeft)}</span>
-      </p>
-
+    <PlayBackground gradient="from-sky-100 via-yellow-50 to-pink-100">
       {/* Header */}
-      <h2 className="text-3xl font-bold text-indigo-700 mb-2">{title}</h2>
-      <p className="text-gray-600 text-lg mb-4">{description}</p>
-
-      {/* Sticker */}
-      <motion.div className="flex justify-center gap-8 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <motion.div
-          className="cursor-grab text-7xl"
-          draggable
-          onDragStart={(e:any) => e.dataTransfer.setData('sticker', '⭐')}
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          ⭐
-        </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-6 bg-white/80 rounded-2xl p-4 shadow-lg border-4 border-yellow-200 mx-4"
+      >
+        <Smile className="w-12 h-12 text-pink-500 mx-auto animate-bounce" />
+        <h2 className="text-3xl md:text-4xl font-extrabold text-purple-700 mb-2 animate-pulse">
+          Find all the {capitalize(targetShape)}s {shapeEmoji(targetShape)}
+        </h2>
+        <p className="text-lg text-gray-700 font-bold">
+          Tap them quickly before time runs out! 🌈
+        </p>
       </motion.div>
 
-      {/* 4×4 Grid */}
-      <div className="grid grid-cols-4 gap-8 justify-items-center px-6 pb-10">
+      {/* Timer & Attempts */}
+      <div className="flex justify-center items-center gap-4 mb-8">
+        <div className="bg-white/80 px-6 py-3 rounded-full shadow-md border-4 border-green-200 text-2xl font-bold text-green-600">
+          ⏱ {formatTime(timeLeft)}
+        </div>
+        <div className="flex gap-2">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+            <motion.div
+              key={i}
+              className={`w-6 h-6 rounded-full border-2 border-white shadow-md ${
+                i < attempts ? 'bg-rose-400' : 'bg-green-400'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Shapes grid */}
+      <div className="grid grid-cols-4 gap-6 justify-items-center px-6 pb-6 max-w-5xl mx-auto">
         {shapes.map((shape, i) => (
           <motion.div
             key={i}
             id={`shape-${i}`}
-            className="relative flex items-center justify-center w-28 h-28 rounded-full bg-white shadow-md hover:shadow-lg"
-            onDrop={(e) => {
-              e.preventDefault()
-              const sticker = e.dataTransfer.getData('sticker')
-              handleStickerPlace(i, sticker)
-            }}
-            onDragOver={(e) => e.preventDefault()}
             whileHover={{ scale: shape.disabled ? 1 : 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 60, delay: i * 0.08 }}
+            onClick={() => handleClick(i)}
+            className={`relative flex items-center justify-center w-24 h-24 rounded-3xl cursor-pointer shadow-xl transition-all ${
+              shape.disabled
+                ? 'bg-green-100 border-6 border-green-400'
+                : 'bg-white hover:border-yellow-300 border-6 border-transparent'
+            }`}
           >
-            {shape.type === 'star' && (
-              <Star className="w-18 h-18 text-yellow-400 fill-yellow-300" />
-            )}
-            {shape.type === 'triangle' && (
-              <Triangle className="w-18 h-18 text-purple-400" />
-            )}
-            {shape.type === 'square' && (
-              <Square className="w-18 h-18 text-blue-400" />
-            )}
-            {shape.type === 'hexagon' && (
-              <Hexagon className="w-18 h-18 text-rose-400" />
-            )}
-            {shape.type === 'heart' && (
-              <Heart className="w-18 h-18 text-pink-400 fill-pink-300" />
-            )}
-            {shape.type === 'circle' && (
-              <Circle className="w-18 h-18 text-green-400" />
-            )}
-            {shape.type === 'octagon' && (
-              <Octagon className="w-18 h-18 text-orange-400" />
-            )}
-            {shape.type === 'diamond' && (
-              <Diamond className="w-18 h-18 text-cyan-400" />
-            )}
+            {renderShape(shape.type)}
             {shape.hasSticker && (
-              <motion.div className="absolute text-4xl" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                ⭐
+              <motion.div
+                className="absolute text-3xl text-green-500"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1.1 }}
+              >
+                ✅
+              </motion.div>
+            )}
+            {celebrations.includes(i) && (
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 2, opacity: 0 }}
+                transition={{ duration: 1.2 }}
+              >
+                <div className="text-3xl">🎉</div>
               </motion.div>
             )}
           </motion.div>
         ))}
       </div>
 
-      {/* Feedback */}
-      {attempts > 0 && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`text-lg font-semibold ${
-            attempts >= 4 ? 'text-orange-600' : 'text-green-600'
-          }`}
-        >
-          {attempts >= 4
-            ? 'Careful! Only a few tries left! 💫'
-            : "You're doing great! Keep going! 🌟"}
-        </motion.p>
-      )}
+      {/* Encouragement */}
+      <AnimatePresence>
+        {attempts > 0 && !showPopup && !gameOver && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`text-2xl font-bold px-6 py-3 rounded-xl border-4 shadow-md ${
+              attempts >= 4
+                ? 'bg-red-100 border-red-400 text-red-700'
+                : 'bg-green-100 border-green-400 text-green-700'
+            }`}
+          >
+            {attempts >= 4 ? 'Careful! 💫' : 'Great job! Keep going! 🌟'}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style jsx>{`
         @keyframes shake {
-          0%,100%{transform:translateX(0);}
-          25%{transform:translateX(-10px);}
-          75%{transform:translateX(10px);}
+          0%,100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
         }
       `}</style>
+    </PlayBackground>
+  )
+}
+
+/* 🟪 Helpers */
+function renderShape(shape: string) {
+  const size = 'w-14 h-14'
+  switch (shape) {
+    case 'star': return <Star className={`${size} text-yellow-400 fill-yellow-300`} />
+    case 'circle': return <Circle className={`${size} text-blue-500 fill-blue-300`} />
+    case 'square': return <Square className={`${size} text-purple-500 fill-purple-300`} />
+    case 'heart': return <Heart className={`${size} text-rose-500 fill-rose-300`} />
+    case 'triangle': return <Triangle className={`${size} text-orange-500 fill-orange-300`} />
+    case 'diamond': return <Diamond className={`${size} text-cyan-500 fill-cyan-300`} />
+    case 'pentagon': return <Pentagon className={`${size} text-green-500 fill-green-300`} />
+    case 'octagon': return <Octagon className={`${size} text-pink-500 fill-pink-300`} />
+  }
+}
+
+const shapeEmoji = (s: string) =>
+  ({ star:'⭐',circle:'🔵',square:'🟪',heart:'❤️',triangle:'🔺',diamond:'💎',pentagon:'🟩',octagon:'🧊' }[s] || '🌟')
+const capitalize = (s:string)=>s.charAt(0).toUpperCase()+s.slice(1)
+
+/* 🎉 Confetti */
+function Confetti() {
+  const confetti = Array.from({length:20})
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {confetti.map((_,i)=>(
+        <motion.div key={i} className="absolute text-xl"
+          style={{left:`${Math.random()*100}%`,top:`${Math.random()*100}%`}}
+          initial={{y:-100,opacity:1}}
+          animate={{y:1000,opacity:0,rotate:360,x:Math.random()*200-100}}
+          transition={{duration:Math.random()*2+1,delay:Math.random()*0.5}}
+        >
+          {['🎉','⭐','🎈','🌈','✨'][Math.floor(Math.random()*5)]}
+        </motion.div>
+      ))}
     </div>
   )
 }
 
-// Floating background
-function FloatingStars() {
-  const stars = Array.from({ length: 20 })
+/* 🌈 Background */
+function PlayBackground({children,gradient='from-yellow-50 via-white to-pink-50'}:{
+  children:React.ReactNode;gradient?:string}) {
+  const floaters = Array.from({length:10})
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {stars.map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-yellow-300 opacity-40"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            fontSize: `${Math.random() * 1.5 + 1.2}rem`,
-          }}
-          animate={{ y: [0, -25, 0], opacity: [0.3, 1, 0.3] }}
-          transition={{
-            duration: Math.random() * 4 + 3,
-            repeat: Infinity,
-            delay: Math.random() * 2,
-          }}
+    <div className={`relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b ${gradient}`}>
+      {floaters.map((_,i)=>(
+        <motion.div key={i} className="absolute text-2xl opacity-20"
+          style={{top:`${Math.random()*100}%`,left:`${Math.random()*100}%`}}
+          animate={{y:[0,-60,0],rotate:[0,180,360]}}
+          transition={{duration:Math.random()*8+8,repeat:Infinity,delay:Math.random()*4}}
         >
-          ⭐
+          {['⭐','🔵','🟪','❤️','🔺','💎','🟩','🧊'][i%8]}
         </motion.div>
       ))}
+      <div className="relative z-10 w-full max-w-5xl text-center">{children}</div>
     </div>
   )
 }
